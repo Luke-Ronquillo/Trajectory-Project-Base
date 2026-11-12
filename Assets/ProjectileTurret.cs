@@ -15,6 +15,8 @@ public class ProjectileTurret : MonoBehaviour
     [SerializeField] Transform barrelEnd;
     [SerializeField] LineRenderer line;
     [SerializeField] bool useLowAngle;
+    [SerializeField] int maxSteps = 50;
+    [SerializeField] float timeStep = 0.05f;
 
     List<Vector3> points = new List<Vector3>();
 
@@ -30,6 +32,7 @@ public class ProjectileTurret : MonoBehaviour
         TrackMouse();
         TurnBase();
         RotateGun();
+        DrawArcLine();
 
         if (Input.GetButtonDown("Fire1"))
             Fire();
@@ -51,6 +54,31 @@ public class ProjectileTurret : MonoBehaviour
             crosshair.transform.forward = hit.normal;
             crosshair.transform.position = hit.point + hit.normal * 0.1f;
             //Debug.Log("hit ground");
+        }
+    }
+
+    void DrawArcLine()
+    {
+        points.Clear();
+        points.Add(barrelEnd.position);
+        Vector3 previousPoint = barrelEnd.position;
+        for (int i = 0; i < maxSteps; i++)
+        {
+            float time = i * timeStep;
+            Vector3 currentPoint = barrelEnd.position + (barrelEnd.forward.normalized * projectileSpeed * time) + (0.5f * Physics.gravity * time * time);
+
+            if (Physics.Linecast(previousPoint, currentPoint, out RaycastHit hit, targetLayer))
+            {
+                points.Add(hit.point);
+                break;
+            }
+            points.Add(currentPoint);
+            previousPoint = currentPoint;
+        }
+        line.positionCount = points.Count;
+        for (int i = 0; i < points.Count; i++)
+        {
+            line.SetPosition(i, points[i]);
         }
     }
 

@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class LaserTurret : MonoBehaviour
@@ -32,6 +33,15 @@ public class LaserTurret : MonoBehaviour
         if(Physics.Raycast(barrelEnd.position, barrelEnd.forward, out RaycastHit hit, 1000.0f, targetLayer))
         {
             laserPoints.Add(hit.point);
+            Vector3 reflectedLocalDirection = ReflectedVector(hit);
+            if (Physics.Raycast(hit.point, reflectedLocalDirection, out RaycastHit hit2, 1000.0f, targetLayer))
+            {
+                laserPoints.Add(hit2.point);
+            }
+            else
+            {
+                laserPoints.Add(hit.point + reflectedLocalDirection * 1000);
+            }
         }
 
         line.positionCount = laserPoints.Count;
@@ -39,6 +49,15 @@ public class LaserTurret : MonoBehaviour
         {
             line.SetPosition(i, laserPoints[i]);
         }
+    }
+
+    Vector3 ReflectedVector(RaycastHit hit)
+    {
+        Vector3 d = (hit.point - barrelEnd.position).normalized;
+        float dotProd = Vector3.Dot(d, hit.normal.normalized);
+        dotProd *= 2;
+        Vector3 newNormal = dotProd * hit.normal.normalized;
+        return (d - newNormal);
     }
 
     void TrackMouse()
